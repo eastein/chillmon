@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Here is a growing collection of libraries and example python scripts for controlling a variety of Adafruit electronics with a Raspberry Pi
 
@@ -11,8 +9,9 @@ Written by Limor Fried, Kevin Townsend and Mikey Sklar for Adafruit Industries. 
 
 To download, we suggest logging into your Pi with Internet accessibility and typing: git clone https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code.git
 
-Refactored into a class structure and pluggable access objects added by Eric Stein
+Refactored into a class structure and pluggable access objects added by Eric Stein.  Modifications BSD as well.
 """
+
 import RPi.GPIO as GPIO
 import threading
 
