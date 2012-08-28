@@ -10,8 +10,11 @@ Adafruit invests time and resources providing this open source code, please supp
 Written by Limor Fried, Kevin Townsend and Mikey Sklar for Adafruit Industries. BSD license, all text above must be included in any redistribution
 
 To download, we suggest logging into your Pi with Internet accessibility and typing: git clone https://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code.git
+
+Refactored into a class structure and pluggable access objects added by Eric Stein
 """
 import RPi.GPIO as GPIO
+import threading
 
 # change these as desired - they're the pins connected from the
 # SPI port on the ADC to the Cobbler
@@ -63,6 +66,8 @@ class TMP36(Pin) :
 			return TMP36.c2k(c)
 
 class MCP3008(object) :
+	SPI_LOCK = threading.Lock()
+
 	def __init__(self, mv_aref) :
 		self.mv_aref = mv_aref
 		self.channels = [None] * 8
@@ -74,7 +79,7 @@ class MCP3008(object) :
 		GPIO.setup(SPICS, GPIO.OUT)
 
 	# read SPI data from MCP3008 chip, 8 possible adc's (0 thru 7)
-	def readadc(self, adcnum, clockpin=SPICLK, mosipin=SPIMOSI, misopin=SPIMISO, cspin=SPICS):
+	def _readadc(self, adcnum, clockpin=SPICLK, mosipin=SPIMOSI, misopin=SPIMISO, cspin=SPICS):
 		if ((adcnum > 7) or (adcnum < 0)):
 		        return -1
 		GPIO.output(cspin, True)
@@ -108,6 +113,13 @@ class MCP3008(object) :
 		adcout /= 2       # first bit is 'null' so drop it
 		
 		return adcout * ( self.mv_aref / 1024.0)
+
+	def readadc(self, *args, **kwargs) :
+		self.SPI_LOCK.acquire(True)
+		try :
+			return self._readadc(*args, **kwargs)
+		finally :
+			self.SPI_LOCK.release()
 
 	def setup_channel(self, channel_number, pinobject) :
 		pinobject.setup_mcp3008(self, channel_number)
