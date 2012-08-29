@@ -37,5 +37,5 @@ if __name__ == '__main__' :
 	a2d.setup_channel(1, room)
 	beertop = mcp3008.TMP36(mcp3008.TMP36.F)
 	a2d.setup_channel(2, beertop)
-	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], {'beer' : beer, 'room' : roomtemp, 'beertop' : beertop})
+	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], {'beer' : beer, 'room' : room, 'beertop' : beertop})
 	chill.run()
