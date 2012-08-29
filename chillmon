@@ -31,7 +31,11 @@ class ChillmonBotThread(mediorc.IRCThread) :
 
 if __name__ == '__main__' :
 	a2d = mcp3008.MCP3008(3300.0)
-	temperature = mcp3008.TMP36(mcp3008.TMP36.F)
-	a2d.setup_channel(0, temperature)
-	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], {'beer' : temperature})
+	beer = mcp3008.TMP36(mcp3008.TMP36.F)
+	a2d.setup_channel(0, beer)
+	room = mcp3008.TMP36(mcp3008.TMP36.F)
+	a2d.setup_channel(1, room)
+	beertop = mcp3008.TMP36(mcp3008.TMP36.F)
+	a2d.setup_channel(2, beertop)
+	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], {'beer' : beer, 'room' : roomtemp, 'beertop' : beertop})
 	chill.run()
