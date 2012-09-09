@@ -4,28 +4,85 @@ import RPi.GPIO as GPIO
 import mcp3008
 import mediorc
 import sys
+import time
 
 CHILLPIN = 17
 
-class StateMachine(object) :
-	def __init__(self, temp_probes) :
-		self.chiller = False
-		self.temp_probes = temp_probes
-		self.i = 0
+class PID(object) :
+	def __init__(self, temp_probe, target) :
+		self.temp_probe = temp_probe
+		self.target = target
 		GPIO.setup(CHILLPIN, GPIO.OUT)
 
-	def step(self) :
-		self.i += 1
-
-		if self.i % 50 == 0 :
-			self.chiller = not self.chiller
-
+		self.pid_ts = None
+		self.chiller = False
 		GPIO.output(CHILLPIN, self.chiller)
 
+		# pid state
+		self.fError = 0.0
+		self.fIError = 0.0
+		self.fPriorError = -100.0
+		self.fPeriod = 600.0
+
+		# guesstimated PID constants
+		self.fKP = 30.0
+		self.fKI = 1.0
+		self.fKD = 40.0
+
+	def step(self) :
+		now = time.time()
+		if self.pid_ts is None or self.pid_ts < now - self.fPeriod :
+			self.pid_ts = now
+			self.fTemp = self.temp_probe.read()
+			self.fError = self.fTemp - self.target
+			print 'err: %f' % self.fError
+
+		"""
+    while (1) {
+        // This could do something neat like average several probes
+        fTemp = GetTemp();
+        // This is the error we want to reduce to 0. Positive values mean it is too warm.
+        fError = fTemp - fSetpoint;
+
+        fPID = 0;
+
+        // Proportional
+        fPID += fKP * fError;
+
+        // Integral
+        // Normalize this to Degree Minutes
+        fIError += ( fError * (float) CHILL_CYCLE ) / 60.0;
+
+        fPID += fKI * fIError;
+
+        // Derivative
+        // Can't do this on the first pass
+        if ( fPriorError != -100.0 ) {
+            // Normalize this to Degrees per Minute
+            fDError = ( ( fError - fPriorError ) * 60.0 ) / (float) CHILL_CYCLE;
+            // Store the error
+            fPriorError = fError;
+
+            fPID += fKD * fDError;
+        } else {
+            // Store prior error, we'll use it next time around
+            fPriorError = fError;
+        }
+
+        Chill( (int) fPID );
+    };
+}
+
+		"""
+		
+		# PWM not yet written, when it is .chiller will always be a bool for if the chiller should be on at this point. TODO
+		# FIXME LOL GPIO.output(CHILLPIN, self.chiller)
+
 class ChillmonBot(mediorc.IRC) :
-	def __init__(self, server, nick, chan, temp_probes, state_machine) :
+	def __init__(self, server, nick, chan, temp_probes, state_machine, zmqpub=None) :
 		self.temp_probes = temp_probes
 		self.state_machine = state_machine
+		self.zmqpub = zmqpub
 		mediorc.IRC.__init__(self, server, nick, chan)
 
 	def on_pubmsg(self, c, e) :
@@ -40,11 +97,13 @@ class ChillmonBot(mediorc.IRC) :
 			self.connection.privmsg(chan, msg)
 
 	def do_work(self) :
+		if self.zmqpub :
+			self.zmqpub.send(dict([(k,v.read()) for k,v in self.temp_probes.items()]))
 		self.state_machine.step()
 
 class ChillmonBotThread(mediorc.IRCThread) :
-	def __init__(self, server, nick, chan, temperature_probes, state_machine) :
-		self.bot_create = lambda: ChillmonBot(server, nick, chan, temperature_probes, state_machine)
+	def __init__(self, server, nick, chan, temperature_probes, pid, zmqpub=None) :
+		self.bot_create = lambda: ChillmonBot(server, nick, chan, temperature_probes, pid, zmqpub=zmqpub)
 		mediorc.IRCThread.__init__(self)
 
 if __name__ == '__main__' :
@@ -56,8 +115,16 @@ if __name__ == '__main__' :
 	beertop = mcp3008.TMP36(mcp3008.TMP36.F)
 	a2d.setup_channel(2, beertop)
 
-	temp_probes = {'beer' : beer, 'room' : room, 'beertop' : beertop}
-	state_machine = StateMachine(temp_probes)
+	zmqpub = None
+	try :
+		url = sys.argv[4]
+		import zmqsub
+		zmqpub = zmqsub.JSONZMQBindPub(url)
+	except IndexError :
+		pass
 
-	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], temp_probes, state_machine)
+	temp_probes = {'beer' : beer, 'room' : room, 'beertop' : beertop}
+	pid = PID(beer, 67.0) # TODO configuration system for what temp to stick to
+
+	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], temp_probes, pid, zmqpub=zmqpub)
 	chill.run()
