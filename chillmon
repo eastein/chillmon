@@ -15,68 +15,79 @@ class PID(object) :
 		GPIO.setup(CHILLPIN, GPIO.OUT)
 
 		self.pid_ts = None
-		self.chiller = False
-		GPIO.output(CHILLPIN, self.chiller)
+		self.events = []
+		GPIO.output(CHILLPIN, False)
+
+		self.fPeriod = 600.0
+		self.fMinOff = 60.0 * 3
+		assert self.fPeriod > self.fMinOff
 
 		# pid state
-		self.fError = 0.0
-		self.fIError = 0.0
-		self.fPriorError = -100.0
-		self.fPeriod = 600.0
+		self.fError = None
+		self.fIError = None
+		self.fDError = None
+		self.fPriorError = None
 
-		# guesstimated PID constants
-		self.fKP = 30.0
-		self.fKI = 1.0
-		self.fKD = 40.0
+		# guesstimated PID constants. ratio, not percentage based.
+		self.fKP = 0.05
+		self.fKI = 0
+		self.fKD = 0
 
 	def step(self) :
 		now = time.time()
 		if self.pid_ts is None or self.pid_ts < now - self.fPeriod :
 			self.pid_ts = now
 			self.fTemp = self.temp_probe.read()
+
+			# This is the error we want to reduce to 0. Positive values mean it is too warm.
 			self.fError = self.fTemp - self.target
 			print 'err: %f' % self.fError
+			
+			# figure out proportion to use, start at 0
+			self.fPID = 0.0
 
-		"""
-    while (1) {
-        // This could do something neat like average several probes
-        fTemp = GetTemp();
-        // This is the error we want to reduce to 0. Positive values mean it is too warm.
-        fError = fTemp - fSetpoint;
+			# apply proportional...
+			self.fPID += self.fKP * self.fError
 
-        fPID = 0;
+			# to degree-minutes
+			self.fIError = (self.fError * self.fPeriod) / 60.0
 
-        // Proportional
-        fPID += fKP * fError;
+			# apply integral...
+			self.fPID += self.fKI * self.fIError
 
-        // Integral
-        // Normalize this to Degree Minutes
-        fIError += ( fError * (float) CHILL_CYCLE ) / 60.0;
+			if self.fPriorError is not None :
+				self.fDError = ((self.fError - self.fPriorError) * 60.0) / self.fPeriod
+			self.fPriorError = self.fError
 
-        fPID += fKI * fIError;
-
-        // Derivative
-        // Can't do this on the first pass
-        if ( fPriorError != -100.0 ) {
-            // Normalize this to Degrees per Minute
-            fDError = ( ( fError - fPriorError ) * 60.0 ) / (float) CHILL_CYCLE;
-            // Store the error
-            fPriorError = fError;
-
-            fPID += fKD * fDError;
-        } else {
-            // Store prior error, we'll use it next time around
-            fPriorError = fError;
-        }
-
-        Chill( (int) fPID );
-    };
-}
-
-		"""
+			# if we've got a derivative... apply it
+			if self.fDError is not None :
+				self.fPID += self.fKD * self.fDError
 		
-		# PWM not yet written, when it is .chiller will always be a bool for if the chiller should be on at this point. TODO
-		# FIXME LOL GPIO.output(CHILLPIN, self.chiller)
+			print time.ctime(), 'PID output: %f' % self.fPID
+
+			if self.fPID * self.fPeriod < 30.0 :
+				# nope, it's less than 1%. just turn it off and leave it that way until next time
+				self.events.append((now, False))
+				print time.ctime(), 'no chilling, pid output way low. just turning off'
+			else :
+				off_sec = (1.0 - self.fPID) * self.fPeriod
+				off_sec = max(off_sec, self.fMinOff) # 3 minute minimum to be off
+				on_sec = self.fPeriod - off_sec
+
+				self.events.append((now, True))
+				self.events.append((now + on_sec, False))
+				print time.ctime(), 'scheduled on/off events for pid output. on for %f, off for %f' % (on_sec, off_sec)
+
+		kept_events = []
+		for event in self.events :
+			ts,val = event
+			if ts <= now :
+				print time.ctime(), 'set chiller: %f' % val
+				GPIO.output(CHILLPIN, val)
+			else :
+				kept_events.append(event)
+		
+		self.events = kept_events
 
 class ChillmonBot(mediorc.IRC) :
 	def __init__(self, server, nick, chan, temp_probes, state_machine, zmqpub=None) :
