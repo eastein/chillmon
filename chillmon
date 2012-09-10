@@ -8,6 +8,12 @@ import time
 
 CHILLPIN = 17
 
+def nv(v) :
+	if v is None :
+		return 0.0
+	else :
+		return v
+
 class PID(object) :
 	def __init__(self, temp_probe, target) :
 		self.temp_probe = temp_probe
@@ -18,7 +24,7 @@ class PID(object) :
 		self.events = []
 		GPIO.output(CHILLPIN, False)
 
-		self.fPeriod = 600.0
+		self.fPeriod = 300.0
 		self.fMinOff = 60.0 * 3
 		assert self.fPeriod > self.fMinOff
 
@@ -28,10 +34,24 @@ class PID(object) :
 		self.fDError = None
 		self.fPriorError = None
 
+		self.fPID = None
+
 		# guesstimated PID constants. ratio, not percentage based.
-		self.fKP = 0.05
-		self.fKI = 0
-		self.fKD = 0
+		self.fKP = 0.02
+		self.fKI = 0.002
+		self.fKD = 0.0
+
+	@property
+	def state(self) :
+		return {
+			'kp' : nv(self.fKP),
+			'ki' : nv(self.fKI),
+			'kd' : nv(self.fKD),
+			'err' : nv(self.fError),	
+			'ierr' : nv(self.fIError),
+			'derr' : nv(self.fDError),
+			'pid' : nv(self.fPID)
+		}
 
 	def step(self) :
 		now = time.time()
@@ -90,9 +110,9 @@ class PID(object) :
 		self.events = kept_events
 
 class ChillmonBot(mediorc.IRC) :
-	def __init__(self, server, nick, chan, temp_probes, state_machine, zmqpub=None) :
+	def __init__(self, server, nick, chan, temp_probes, pid, zmqpub=None) :
 		self.temp_probes = temp_probes
-		self.state_machine = state_machine
+		self.pid = pid
 		self.zmqpub = zmqpub
 		mediorc.IRC.__init__(self, server, nick, chan)
 
@@ -109,8 +129,11 @@ class ChillmonBot(mediorc.IRC) :
 
 	def do_work(self) :
 		if self.zmqpub :
-			self.zmqpub.send(dict([(k,v.read()) for k,v in self.temp_probes.items()]))
-		self.state_machine.step()
+			self.zmqpub.send({
+				'temps' : dict([(k,v.read()) for k,v in self.temp_probes.items()]),
+				'pidstate' : self.pid.state
+			})
+		self.pid.step()
 
 class ChillmonBotThread(mediorc.IRCThread) :
 	def __init__(self, server, nick, chan, temperature_probes, pid, zmqpub=None) :
