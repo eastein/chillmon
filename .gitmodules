@@ -1,6 +1,3 @@
 [submodule "smoothie"]
 	path = smoothie
 	url = git://github.com/joewalnes/smoothie.git
-[submodule "jquery"]
-	path = jquery
-	url = git://github.com/jquery/jquery.git
