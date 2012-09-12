@@ -18,25 +18,40 @@
     <script type="text/javascript">
 
 function init() {
+  $.ajax({
+    url: '/trace',
+    dataType: 'json',
+    success: function(data) {
+      trace_set = data.data;
+      for (var tracetype in trace_set) {
+        var tl = new SmoothieChart({ millisPerPixel: 4500, grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 300000, verticalSections: 4 }});
+        traces = trace_set[tracetype];
+        for (var id in traces) {
+          setup_traces(tl, tracetype, traces[id], id);
+        }
+      }
+    }
+  });
+}
+
+function setup_traces(tl, tracetype, tracename, id) {
   var dataset = new TimeSeries();
 
-  var now = new Date().getTime();
+  var rgb = ['rgba(255, 0, 0, 1)', 'rgba(0, 255, 0, 1)', 'rgba(0, 0, 255, 1)', 'rgba(220, 0, 220, 1)', 'rgba(2, 183, 98, 1)']
 
   // Every second, get the total trace
   setInterval(function() {
-    update_dataset(dataset);
+    update_dataset(dataset, tracetype, tracename);
   }, 1000);
 
-  var timeline = new SmoothieChart({ millisPerPixel: 4500, grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 300000, verticalSections: 4 }});
+  tl.addTimeSeries(dataset, {strokeStyle: rgb[id], fillStyle: 'rgba(10, 10, 10, 0.1)', lineWidth: 2});
 
-  timeline.addTimeSeries(dataset, { strokeStyle: 'rgba(255, 0, 0, 1)', fillStyle: 'rgba(255, 0, 0, 0.1)', lineWidth: 3 });
-
-  timeline.streamTo(document.getElementById('temps'), 1000);
+  tl.streamTo(document.getElementById(tracetype), 1000);
 }
 
-function update_dataset(dataset) {
+function update_dataset(dataset, tt, tn) {
   $.ajax({
-    url: '/trace/all',
+    url: '/trace/' + tt + '/' + tn,
     dataType: 'json',
     success: function(data) {
       dataset.data = data['data'];
@@ -53,7 +68,10 @@ function update_dataset(dataset) {
     <h1>Chillmon</h1>
 
     <h4>Temps</h4>
-    <canvas id="temps" width="800" height="100"></canvas>
+    <canvas id="temps" width="900" height="200"></canvas>
+
+    <h4>PID States</h4>
+    <canvas id="pidstate" width="900" height="200"></canvas>
   </body>
 </html>
 

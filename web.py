@@ -44,12 +44,11 @@ class TraceThread(threading.Thread) :
 	def stop(self) :
 		self.ok = False
 
-	@property
-	def temps(self) :
+	def get_trace(self, a, b) :
 		r = []
 		for samp in self.samples :
 			ts, sample = samp
-			r.append((ts, sample['temps']['beer']))
+			r.append((ts, sample[a][b]))
 		return r
 
 	def run(self) :
@@ -147,21 +146,27 @@ class JSONHandler(BaseHandler):
 
 		self.wj(status, resp)
 
+class TraceListHandler(JSONHandler):
+	def process_request(self):
+		ts, i = self.application.__traces__.samples[0]
+		return dict([(k,i[k].keys()) for k in i])
+
 class TraceHandler(JSONHandler):
-	def process_request(self, tracename):
-		return self.application.__traces__[tracename].temps
+	def process_request(self, tracetype, tracename):
+		return self.application.__traces__.get_trace(tracetype, tracename)
 
 if __name__ == '__main__' :
 	handler_set = [
 		(r"/$", InterfaceHandler),
 		(r"/([a-z0-9\.\-]+\.js)$", JSHandler),
-		(r"/trace/([a-z0-9\.\-]+)$", TraceHandler)
+		(r"/trace$", TraceListHandler),
+		(r"/trace/([a-z0-9\.\-]+)/([a-z0-9\.\-]+)$", TraceHandler)
 	]
 
 	sock = zmqsub.JSONZMQSub(sys.argv[1])
 	tt = TraceThread(sock)
 	tt.start()
-	traces = {'all' : tt}
+	traces = tt
 
 	application = tornado.web.Application(handler_set)
 	application.__traces__ = traces
@@ -170,4 +175,8 @@ if __name__ == '__main__' :
 	application.listen(8000)
 
 	application.__io_instance__ = tornado.ioloop.IOLoop.instance()
-	application.__io_instance__.start()
+	
+	try :
+		application.__io_instance__.start()
+	finally :
+		tt.stop()
