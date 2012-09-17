@@ -17,6 +17,19 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
     <script type="text/javascript">
 
+function Boxed(type) {
+  this.type = type;
+  this.val = 0;
+}
+
+Boxed.prototype.get = function() {
+  return this.val;
+}
+
+Boxed.prototype.set = function(v) {
+  this.val = v;
+}
+
 function init() {
   $.ajax({
     url: '/trace',
@@ -36,12 +49,13 @@ function init() {
 
 function setup_traces(tl, tracetype, tracename, id) {
   var dataset = new TimeSeries();
-
+  var ts = new Boxed();
+  
   var rgb = ['rgba(255, 0, 0, 1)', 'rgba(0, 255, 0, 1)', 'rgba(0, 0, 255, 1)', 'rgba(220, 0, 220, 1)', 'rgba(2, 183, 98, 1)']
 
   // Every second, get the total trace
   setInterval(function() {
-    update_dataset(dataset, tracetype, tracename);
+    update_dataset(dataset, ts, tracetype, tracename);
   }, 1000);
 
   tl.addTimeSeries(dataset, {strokeStyle: rgb[id], fillStyle: 'rgba(10, 10, 10, 0.1)', lineWidth: 2});
@@ -49,13 +63,16 @@ function setup_traces(tl, tracetype, tracename, id) {
   tl.streamTo(document.getElementById(tracetype), 1000);
 }
 
-function update_dataset(dataset, tt, tn) {
+function update_dataset(dataset, ts, tt, tn) {
   $.ajax({
-    url: '/trace/' + tt + '/' + tn,
+    url: '/trace/' + tt + '/' + tn + '/' + ts.get(),
     dataType: 'json',
     success: function(data) {
-      dataset.data = data['data'];
-      dataset.resetBounds()
+      for (var i in data['data']) {
+        v = data['data'][i];
+        dataset.append(v[0], v[1]);
+	ts.set(v[0]);
+      }
     }
   });
 }
