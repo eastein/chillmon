@@ -14,9 +14,13 @@ def nv(v) :
 	else :
 		return v
 
+def mean(l) :
+	return reduce(lambda x,y: x+y, l) / float(len(l))
+
 class PID(object) :
 	def __init__(self, temp_probe, target) :
 		self.temp_probe = temp_probe
+		self.samples = []
 		self.target = target
 		GPIO.setup(CHILLPIN, GPIO.OUT)
 
@@ -55,9 +59,11 @@ class PID(object) :
 
 	def step(self) :
 		now = time.time()
+		self.samples.append(self.temp_probe.read())
 		if self.pid_ts is None or self.pid_ts < now - self.fPeriod :
 			self.pid_ts = now
-			self.fTemp = self.temp_probe.read()
+			self.fTemp = mean(self.samples)
+			self.samples = []
 
 			# This is the error we want to reduce to 0. Positive values mean it is too warm.
 			self.fError = self.fTemp - self.target
@@ -70,7 +76,7 @@ class PID(object) :
 			self.fPID += self.fKP * self.fError
 
 			# to degree-minutes
-			self.fIError = (self.fError * self.fPeriod) / 60.0
+			self.fIError += (self.fError * self.fPeriod) / 60.0
 
 			# apply integral...
 			self.fPID += self.fKI * self.fIError
