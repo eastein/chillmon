@@ -14,8 +14,11 @@ def nv(v) :
 	else :
 		return v
 
-def mean(l) :
-	return reduce(lambda x,y: x+y, l) / float(len(l))
+def mean(l, default=0) :
+	try :
+		return reduce(lambda x,y: x+y, l) / float(len(l))
+	except :
+		return default
 
 class PID(object) :
 	def __init__(self, temp_probe, target) :
@@ -40,6 +43,8 @@ class PID(object) :
 
 		self.fPID = None
 
+		self.fTemp = None
+
 		# guesstimated PID constants. ratio, not percentage based.
 		self.fKP = 0.02
 		self.fKI = 0.002
@@ -60,9 +65,9 @@ class PID(object) :
 	def step(self) :
 		now = time.time()
 		self.samples.append(self.temp_probe.read())
+		self.fTemp = mean(self.samples, default=self.target)
 		if self.pid_ts is None or self.pid_ts < now - self.fPeriod :
 			self.pid_ts = now
-			self.fTemp = mean(self.samples)
 			self.samples = []
 
 			# This is the error we want to reduce to 0. Positive values mean it is too warm.
@@ -136,7 +141,7 @@ class ChillmonBot(mediorc.IRC) :
 	def do_work(self) :
 		if self.zmqpub :
 			self.zmqpub.send({
-				'temps' : dict([(k,v.read()) for k,v in self.temp_probes.items()] + [('target', self.pid.target)]),
+				'temps' : dict([(k,v.read()) for k,v in self.temp_probes.items()] + [('run_avg', self.pid.fTemp), ('target', self.pid.target)]),
 				'pidstate' : self.pid.state
 			})
 		self.pid.step()
