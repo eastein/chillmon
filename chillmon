@@ -34,7 +34,7 @@ class PID(object) :
 
 		# pid state
 		self.fError = None
-		self.fIError = None
+		self.fIError = 0.0
 		self.fDError = None
 		self.fPriorError = None
 
