@@ -130,7 +130,7 @@ class ChillmonBot(mediorc.IRC) :
 	def do_work(self) :
 		if self.zmqpub :
 			self.zmqpub.send({
-				'temps' : dict([(k,v.read()) for k,v in self.temp_probes.items()]),
+				'temps' : dict([(k,v.read()) for k,v in self.temp_probes.items()] + [('target', self.pid.target)]),
 				'pidstate' : self.pid.state
 			})
 		self.pid.step()
