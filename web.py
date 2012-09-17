@@ -166,7 +166,7 @@ if __name__ == '__main__' :
 		(r"/$", InterfaceHandler),
 		(r"/([a-z0-9\.\-]+\.js)$", JSHandler),
 		(r"/trace$", TraceListHandler),
-		(r"/trace/([a-z0-9\.\-]+)/([a-z0-9\.\-]+)/([0-9]+)$", TraceHandler)
+		(r"/trace/([a-z0-9\.\-_]+)/([a-z0-9\.\-_]+)/([0-9]+)$", TraceHandler)
 	]
 
 	sock = zmqsub.JSONZMQSub(sys.argv[1])

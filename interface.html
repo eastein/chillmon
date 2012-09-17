@@ -51,7 +51,14 @@ function setup_traces(tl, tracetype, tracename, id) {
   var dataset = new TimeSeries();
   var ts = new Boxed();
   
-  var rgb = ['rgba(255, 0, 0, 1)', 'rgba(0, 255, 0, 1)', 'rgba(0, 0, 255, 1)', 'rgba(220, 0, 220, 1)', 'rgba(2, 183, 98, 1)']
+  var rgb = [
+    'rgba(255, 0, 0, 1)',
+    'rgba(0, 255, 0, 1)',
+    'rgba(0, 0, 255, 1)',
+    'rgba(220, 0, 220, 1)',
+    'rgba(2, 183, 98, 1)',
+    'rgba(98, 27, 120, 1)'
+  ]
 
   // Every second, get the total trace
   setInterval(function() {
