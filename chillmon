@@ -5,6 +5,7 @@ import mcp3008
 import mediorc
 import sys
 import time
+import pidvarmap
 
 CHILLPIN = 17
 
@@ -159,15 +160,8 @@ fIError
 				try :
 					cmd = v['cmd']
 					if cmd == 'set' :
-						typemap = {
-							'fKP' : float,	
-							'fKI' : float,
-							'fKD' : float,
-							'fIError' : float,
-							'target' : float
-						}
 						k = v['k']
-						val = typemap[k](v['v'])
+						val = pidvarmap.typemap[k](v['v'])
 						setattr(self.pid, k, val)
 					else :
 						print 'ERR: unknown command %s' % cmd

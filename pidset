@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+import zmqsub
+import sys
+import pidvarmap
+
+ct = zmqsub.JSONZMQConnectPub(sys.argv[1])
+ct.send({'cmd': 'set', 'k' : sys.argv[2], 'v' : pidvarmap.typemap[sys.argv[2]](sys.argv[3])})
