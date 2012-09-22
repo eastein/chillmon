@@ -97,8 +97,8 @@ class PID(object) :
 		
 			print time.ctime(), 'PID output: %f' % self.fPID
 
-			if self.fPID * self.fPeriod < 30.0 :
-				# nope, it's less than 1%. just turn it off and leave it that way until next time
+			if self.fPID < 0.02 :
+				# nope, it's less than 2%. just turn it off and leave it that way until next time
 				self.events.append((now, False))
 				print time.ctime(), 'no chilling, pid output way low. just turning off'
 			else :
