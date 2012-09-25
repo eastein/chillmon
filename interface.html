@@ -37,7 +37,7 @@ function init() {
     success: function(data) {
       trace_set = data.data;
       for (var tracetype in trace_set) {
-        var tl = new SmoothieChart({ millisPerPixel: 4500, grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 300000, verticalSections: 4 }});
+        var tl = new SmoothieChart({ millisPerPixel: 4000, grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 300000, verticalSections: 4 }});
         traces = trace_set[tracetype];
         for (var id in traces) {
           setup_traces(tl, tracetype, traces[id], id);
