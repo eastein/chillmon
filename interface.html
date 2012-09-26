@@ -63,11 +63,11 @@ function setup_traces(tl, tracetype, tracename, id) {
   // Every second, get the total trace
   setInterval(function() {
     update_dataset(dataset, ts, tracetype, tracename);
-  }, 1000);
+  }, 5000);
 
   tl.addTimeSeries(dataset, {strokeStyle: rgb[id], fillStyle: 'rgba(10, 10, 10, 0.1)', lineWidth: 2});
 
-  tl.streamTo(document.getElementById(tracetype), 1000);
+  tl.streamTo(document.getElementById(tracetype), 5000);
 }
 
 function update_dataset(dataset, ts, tt, tn) {
