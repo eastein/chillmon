@@ -42,6 +42,9 @@ class PID(object) :
 		self.fDError = None
 		self.fPriorError = None
 
+		self.fP = None
+		self.fI = None
+		self.fD = None
 		self.fPID = None
 
 		self.fTemp = None
@@ -60,6 +63,9 @@ class PID(object) :
 			'err' : nv(self.fError),	
 			'ierr' : nv(self.fIError),
 			'derr' : nv(self.fDError),
+			'p' : nv(self.fP)
+			'i' : nv(self.fI)
+			'd' : nv(self.fD)
 			'pid' : nv(self.fPID)
 		}
 
@@ -79,13 +85,13 @@ class PID(object) :
 			self.fPID = 0.0
 
 			# apply proportional...
-			self.fPID += self.fKP * self.fError
+			self.fP = self.fKP * self.fError
 
 			# to degree-minutes
 			self.fIError += (self.fError * self.fPeriod) / 60.0
 
 			# apply integral...
-			self.fPID += self.fKI * self.fIError
+			self.fI = self.fKI * self.fIError
 
 			if self.fPriorError is not None :
 				self.fDError = ((self.fError - self.fPriorError) * 60.0) / self.fPeriod
@@ -93,7 +99,10 @@ class PID(object) :
 
 			# if we've got a derivative... apply it
 			if self.fDError is not None :
-				self.fPID += self.fKD * self.fDError
+				self.fD = self.fKD * self.fDError
+
+			# sum it all up
+			self.fPID = self.fP + self.fI + self.fD
 		
 			print time.ctime(), 'PID output: %f' % self.fPID
 
@@ -102,7 +111,7 @@ class PID(object) :
 				self.events.append((now, False))
 				print time.ctime(), 'no chilling, pid output way low. just turning off'
 			else :
-				off_sec = (1.0 - self.fPID) * self.fPeriod
+				off_sec = (1.0 - min(self.fPID, 1.0)) * self.fPeriod`
 				off_sec = max(off_sec, self.fMinOff) # 3 minute minimum to be off
 				on_sec = self.fPeriod - off_sec
 
