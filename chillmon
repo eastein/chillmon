@@ -57,16 +57,22 @@ class PID(object) :
 	@property
 	def state(self) :
 		return {
-			'kp' : nv(self.fKP),
-			'ki' : nv(self.fKI),
-			'kd' : nv(self.fKD),
-			'err' : nv(self.fError),	
-			'ierr' : nv(self.fIError),
-			'derr' : nv(self.fDError),
-			'p' : nv(self.fP),
-			'i' : nv(self.fI),
-			'd' : nv(self.fD),
-			'pid' : nv(self.fPID)
+			'constants' : {
+				'kp' : nv(self.fKP),
+				'ki' : nv(self.fKI),
+				'kd' : nv(self.fKD),
+			},
+			'errors' : {
+				'err' : nv(self.fError),	
+				'ierr' : nv(self.fIError),
+				'derr' : nv(self.fDError),
+			},
+			'pidstate' : {
+				'p' : nv(self.fP),
+				'i' : nv(self.fI),
+				'd' : nv(self.fD),
+				'pid' : nv(self.fPID)
+			}
 		}
 
 	def step(self) :
@@ -151,10 +157,16 @@ class ChillmonBot(mediorc.IRC) :
 
 	def do_work(self) :
 		if self.zmqpub :
-			self.zmqpub.send({
-				'temps' : dict([(k,v.read()) for k,v in self.temp_probes.items()] + [('run_avg', self.pid.fTemp), ('target', self.pid.target)]),
-				'pidstate' : self.pid.state
+			self.zmqpub.send(
+			ret = {
+				'temps' : dict(
+					[(k,v.read()) for k,v in self.temp_probes.items()]
+				      + [('run_avg', self.pid.fTemp), ('target', self.pid.target)]
+                                )
 			})
+			ret.update(self.pid.state)
+			self.zmqpub.send(ret)
+			
 		"""
 		self.fKP = 0.02
 		self.fKI = 0.002
