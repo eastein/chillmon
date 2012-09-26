@@ -44,7 +44,7 @@ class PID(object) :
 
 		self.fP = None
 		self.fI = None
-		self.fD = None
+		self.fD = 0.0
 		self.fPID = None
 
 		self.fTemp = None
@@ -63,9 +63,9 @@ class PID(object) :
 			'err' : nv(self.fError),	
 			'ierr' : nv(self.fIError),
 			'derr' : nv(self.fDError),
-			'p' : nv(self.fP)
-			'i' : nv(self.fI)
-			'd' : nv(self.fD)
+			'p' : nv(self.fP),
+			'i' : nv(self.fI),
+			'd' : nv(self.fD),
 			'pid' : nv(self.fPID)
 		}
 
@@ -111,7 +111,7 @@ class PID(object) :
 				self.events.append((now, False))
 				print time.ctime(), 'no chilling, pid output way low. just turning off'
 			else :
-				off_sec = (1.0 - min(self.fPID, 1.0)) * self.fPeriod`
+				off_sec = (1.0 - min(self.fPID, 1.0)) * self.fPeriod
 				off_sec = max(off_sec, self.fMinOff) # 3 minute minimum to be off
 				on_sec = self.fPeriod - off_sec
 
