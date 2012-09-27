@@ -54,6 +54,9 @@ class PID(object) :
 		self.fKI = 0.002
 		self.fKD = 0.0
 
+		# physical state
+		self.bCompressor = False;
+
 	@property
 	def state(self) :
 		return {
@@ -72,6 +75,9 @@ class PID(object) :
 				'i' : nv(self.fI),
 				'd' : nv(self.fD),
 				'pid' : nv(self.fPID)
+			},
+			'physical' : {
+				'compressor' : self.bCompressor
 			}
 		}
 
@@ -131,6 +137,7 @@ class PID(object) :
 			if ts <= now :
 				print time.ctime(), 'set chiller: %f' % val
 				GPIO.output(CHILLPIN, val)
+				self.bCompressor = val
 			else :
 				kept_events.append(event)
 		
