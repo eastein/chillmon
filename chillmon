@@ -55,7 +55,7 @@ class PID(object) :
 		self.fKD = 0.0
 
 		# physical state
-		self.bCompressor = False;
+		self.bCompressor = False
 
 	@property
 	def state(self) :
