@@ -21,11 +21,14 @@ def mean(l, default=0) :
 	except :
 		return default
 
+def beersafe(v) :
+	return min(110.0, max(38.0, v))
+
 class PID(object) :
 	def __init__(self, temp_probe, target) :
 		self.temp_probe = temp_probe
 		self.samples = []
-		self.target = target
+		self.target = beersafe(target)
 		GPIO.setup(CHILLPIN, GPIO.OUT)
 
 		self.pid_ts = None
@@ -189,7 +192,13 @@ fIError
 					if cmd == 'set' :
 						k = v['k']
 						val = pidvarmap.typemap[k](v['v'])
-						setattr(self.pid, k, val)
+						try :
+							if k == 'target' : 
+								val = beersafe(val)
+							setattr(self.pid, k, val)
+						except Exception, e :
+							print 'set error', e
+							pass
 					else :
 						print 'ERR: unknown command %s' % cmd
 				except KeyError, ke :
