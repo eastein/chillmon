@@ -37,7 +37,18 @@ function init() {
     success: function(data) {
       trace_set = data.data;
       for (var tracetype in trace_set) {
-        var tl = new SmoothieChart({ millisPerPixel: 4000, grid: { strokeStyle: '#555555', lineWidth: 1, millisPerLine: 300000, verticalSections: 4 }});
+        var tl = new SmoothieChart({
+          millisPerPixel: 5000,
+          grid: {
+            strokeStyle: '#555555',
+            lineWidth: 1,
+            millisPerLine: 300000,
+            verticalSections: 4
+          },
+          fps: 0.2,
+          interpolation: 'line',
+          scaleSmoothing: 1.0
+        });
         traces = trace_set[tracetype];
         for (var id in traces) {
           setup_traces(tl, tracetype, traces[id], id);
@@ -92,16 +103,19 @@ function update_dataset(dataset, ts, tt, tn) {
     <h1>Chillmon</h1>
 
     <h4>Temps</h4>
-    <canvas id="temps" width="900" height="200"></canvas>
+    <canvas id="temps" width="720" height="200"></canvas>
 
     <h4>PID States</h4>
-    <canvas id="pidstate" width="900" height="200"></canvas>
+    <canvas id="pidstate" width="720" height="200"></canvas>
 
     <h4>Constants</h4>
-    <canvas id="constants" width="900" height="200"></canvas>
+    <canvas id="constants" width="720" height="200"></canvas>
 
     <h4>Errors</h4>
-    <canvas id="errors" width="900" height="200"></canvas>
+    <canvas id="errors" width="720" height="200"></canvas>
+
+    <h4>Physical</h4>
+    <canvas id="physical" width="720" height="200"></canvas>
   </body>
 </html>
 

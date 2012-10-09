@@ -63,7 +63,7 @@ class TraceThread(threading.Thread) :
 			samples.append((long(time.time() * 1000), msg))
 			self.samples = samples[-self.sample_cap:]
 
-			time.sleep(1.0)
+			time.sleep(5.0)
 
 class JSHandler(tornado.web.RequestHandler):
 	def get(self, fn):
