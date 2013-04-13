@@ -216,13 +216,13 @@ class ChillmonBotThread(mediorc.IRCThread) :
 		mediorc.IRCThread.__init__(self)
 
 if __name__ == '__main__' :
-	a2d = mcp3008.MCP3008(3300.0)
+	a2d = mcp3008.MCP3008(1000.0)
 	beer = mcp3008.TMP36(mcp3008.TMP36.F)
-	a2d.setup_channel(0, beer)
+	a2d.setup_channel(1, beer)
 	room = mcp3008.TMP36(mcp3008.TMP36.F)
-	a2d.setup_channel(1, room)
+	a2d.setup_channel(2, room)
 	beertop = mcp3008.TMP36(mcp3008.TMP36.F)
-	a2d.setup_channel(2, beertop)
+	a2d.setup_channel(3, beertop)
 
 	zmqpub = None
 	zmqctrl = None
@@ -238,7 +238,8 @@ if __name__ == '__main__' :
 		pass
 
 	temp_probes = {'beer' : beer, 'room' : room, 'beertop' : beertop}
-	pid = PID(beer, 67.0) # TODO configuration system for what temp to stick to
+	pid = PID(beer, 66) # TODO configuration system for what temp to stick to
 
 	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], temp_probes, pid, zmqpub=zmqpub, zmqctrl=zmqctrl)
 	chill.run()
+
