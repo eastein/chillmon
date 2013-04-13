@@ -1,3 +1,6 @@
 [submodule "smoothie"]
 	path = smoothie
 	url = git://github.com/joewalnes/smoothie.git
+[submodule "ChillmonBoard"]
+	path = ChillmonBoard
+	url = git://github.com/RyanPierce/ChillmonBoard.git
