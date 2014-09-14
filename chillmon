@@ -228,17 +228,17 @@ if __name__ == '__main__' :
 	zmqctrl = None
 	try :
 		url = sys.argv[4]
-		import zmqsub
-		zmqpub = zmqsub.JSONZMQBindPub(url)
+		from zmqfan import zmqsub
+		zmqpub = zmqsub.BindPub(url)
 		try :
-			zmqctrl = zmqsub.JSONZMQBindSub(sys.argv[5])
+			zmqctrl = zmqsub.BindSub(sys.argv[5])
 		except IndexError :
 			pass
 	except IndexError :
 		pass
 
-	temp_probes = {'beer' : beer, 'room' : room, 'beertop' : beertop}
-	pid = PID(beer, 66) # TODO configuration system for what temp to stick to
+	temp_probes = {'beer' : beer, 'room' : room}
+	pid = PID(beer, 72) # TODO configuration system for what temp to stick to
 
 	chill = ChillmonBotThread(sys.argv[1], sys.argv[2], sys.argv[3], temp_probes, pid, zmqpub=zmqpub, zmqctrl=zmqctrl)
 	chill.run()

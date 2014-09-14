@@ -1,6 +1,6 @@
 import tornado.web
 import tornado.ioloop
-import zmqsub
+from zmqfan import zmqsub
 import threading
 import re
 import sys
@@ -169,7 +169,7 @@ if __name__ == '__main__' :
 		(r"/trace/([a-z0-9\.\-_]+)/([a-z0-9\.\-_]+)/([0-9]+)$", TraceHandler)
 	]
 
-	sock = zmqsub.JSONZMQSub(sys.argv[1])
+	sock = zmqsub.ConnectSub(sys.argv[1])
 	tt = TraceThread(sock)
 	tt.start()
 	traces = tt
